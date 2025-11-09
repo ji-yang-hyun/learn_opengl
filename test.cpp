@@ -13,11 +13,16 @@ void processInput(GLFWwindow *window) // 인풋 받기 예제, 루프에 들어�
         glfwSetWindowShouldClose(window, true);
 }
 
-float vertices[] = { // normalized device coordinates - -1~1사이의 값으로 좌표 전달해야함
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f
-};  
+float vertices[] = { // 정점배열
+     0.5f,  0.5f, 0.0f,  // 우측 상단
+     0.5f, -0.5f, 0.0f,  // 우측 하단
+    -0.5f, -0.5f, 0.0f,  // 좌측 하단
+    -0.5f,  0.5f, 0.0f   // 좌측 상단
+};
+unsigned int indices[] = {  // 0부터 시작한다는 것을 명심하세요!
+    0, 1, 3,   // 첫 번째 삼각형
+    1, 2, 3    // 두 번째 삼각형
+};   // ebo에서 사용할 배열
 
 const char *vertexShaderSource = "#version 330 core\n" // opengl버전에 맞는 GLSL버전
     "layout (location = 0) in vec3 aPos;\n" // vec3 형식의 aPos 변수 만들기, 입력 변수 location = 0인 애들 aPos에 넣을게~
@@ -112,37 +117,6 @@ int main(){
 
     unsigned int VBO;// visual buffer object, 한 번에 많은 양의 정점 데이터를 GPU에 보내기 위한 배열(버퍼)
     glGenBuffers(1, &VBO); //임의의 버퍼 생성
-    glBindBuffer(GL_ARRAY_BUFFER, VBO); //GL_ARRAY_BUFFER을 사용하는(VBO) 명령을 변수 VBO로 연결시킨다
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //이미 정의된 정점을 버퍼의 메모리에 복사
-    // 데이터를 복사시킬 버퍼, 할당할 메모리, 정점데이터, 그래픽카드의 데이터 관리 설정
-        // GL_STATIC_DRAW: 데이터가 거의 변하지 않습니다.
-        // GL_DYNAMIC_DRAW: 데이터가 자주 변경됩니다.
-        // GL_STREAM_DRAW: 데이터가 그려질때마다 변경됩니다.
-    
-    // vertexShader 절차에서 정점 데이터 어떻게 해석해야하는지 형식 지정 -> [x1,y1,z1,x2,y2,z2,x3,y3,z3] 이거 설정한다는 뜻
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-        // 첫 번쨰 파라미터 0 -> vertexShader 처음에 나온 그 location
-        // 두 번쨰 파라미터 3 -> vertex속성의 크기 (우리는 vec3 써서 정점 넣었었음(aPos의 형식임 그냥))
-        // 세 번쨰 파라미터 GL_FLOAT -> 벡터의 데이터 타입
-        // 네 번째 파라미터 GL_FALSE -> -1~1사이가 아닌 값들을 매핑할건지 여부
-        // 다섯 번째 파라미터 stride, 포지션 세트들 사이의 간격의 크기, 우리는 빽빽하게 보내니까 하나의 포지션 세트 크기만큼 간격이 있지
-            // 빽빽할때 0으로 보내면 알아서 해주기도 함
-        // 여섯 번째 파라미터 데이터의 시작 offset이라는데 뭔지 모르겠고 암튼 0부터 시작한다는 뜻, 나중에 알려줌
-    glEnableVertexAttribArray(0);  //현재 바인딩 된 GL_ARRAY_BUFFER의 0번째와 연결
-    // 오브젝트를 그리고 싶을 때 우리가 생성한 shader program을 사용
-    // glUseProgram(shaderProgram);
-    // 이제 오브젝트를 그립니다
-    // someOpenGLFunctionThatDrawsOurTriangle();   
-    
-    //^ 오브젝트 그릴 때마다 위의 과정 매 번 필요. -> 많은 정점 데이터를 더 간단히 하는 방법!
-
-    // vertexArrayObject(VAO)는
-    // - glEnableVertexAttribArray 함수나 glDisableVertexAttribArray 함수의 호출
-    // - glVertexAttribPointer 함수를 통한 Vertex 속성의 구성
-    // - glVertexAttribPointer 함수를 통해 vertex 속성과 연결된 Vertex buffer objects(VBOs)
-    //들을 저장한다. 즉, vertex속성과 연결된 VBO들, 설정들을 저장하는 하나의 프리셋이라고 생각하자
-    // 여러 VBO와 세팅들을 돌려가며 사용할 때 유용한 form 같은거라고 보여진다
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);  
     // ..:: 초기화 코드 (한번만 실행됩니다(오브젝트가 자주 변경되지 않는 한)) :: ..
@@ -152,19 +126,25 @@ int main(){
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     // 3. 그런 다음 vertex 속성 포인터를 세팅
+    unsigned int EBO; // 삼각형을 구성할 점들의 정점배열에서의 인덱스를 저장하는 배열 EBO, element buffer object
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);  
-
-
-    // ..:: 드로잉 코드 (렌더링 루프 내부) :: ..
-    // 4. 오브젝트를 그립니다.
-    // glUseProgram(shaderProgram);
-    // glBindVertexArray(VAO);
-    // someOpenGLFunctionThatDrawsOurTriangle();  
 
     // 즉, VAO에 VBO의 설정들을 저장한 후 나중에는 VAO를 사용하면 거기서 설정과 연결된 VBO를 가져오니 VAO를 사용하면 된다는거고, 
     // 그렇게 VAO에 여러 개의 VBO설정,포인터 들을 저장할 수 있다는거
     // 말은 vertex array이지만 정확히는 설정값과 위치를 알고있는 주소록같은 느낌
+
+    /*
+    unsigned int EBO; // 삼각형을 구성할 점들의 정점배열에서의 인덱스를 저장하는 배열 EBO, element buffer object
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); 
+    //나머지는 다른 배열들과 같고 여기서 바인딩하는 배열은 GL_ELEMENT_ARRAY_BUFFER라는것만 신경써주자.
+    //VBO랑 마찬가지로 VAO에 저장해서 가져와 쓸 수 있다.
+    */
 
 
     glViewport(0, 0, 800, 600); // 윈도우 설정이다, 처음 두 0,0은 왼쪽 아래 모서리의 위치이고 800,600은 가로 세로 넓이이다.
@@ -178,8 +158,16 @@ int main(){
         glClear(GL_COLOR_BUFFER_BIT); // 버퍼 초기화, 여러 버퍼가 있지만 지금은 컬러 버퍼만
 
         glUseProgram(shaderProgram); // 사용할 쉐이더
-        glBindVertexArray(VAO); // VAO연결해서 우리의 VBO와 연결(VBO가 GL_ARRAY_BUFFER에 연결됨)
-        glDrawArrays(GL_TRIANGLES, 0, 3); // 그 GL_ARRAY_BUFFER을 어떻게 그릴지, 0번쨰 칸부터 3개의 정점을 삼각형으로 그릴거야!
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+        // glBindVertexArray(VAO); // VAO연결해서 우리의 VBO와 연결(VBO가 GL_ARRAY_BUFFER에 연결됨)
+        // glDrawArrays(GL_TRIANGLES, 0, 3); // 그 GL_ARRAY_BUFFER을 어떻게 그릴지, 0번쨰 칸부터 3개의 정점을 삼각형으로 그릴거야!
+        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); // EBO 연결
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // EBO써서 그리는 명령어(glDrawArrays의 EBO버전)
+        // // (그릴 도형, 그릴 정점 개수(삼각형 2개니까 6개), 인덱스의 타입(왜 설정하는지 아직 모르겠음, 이터레이터가 있나?), 마지막은 offset(시작점)
+        
+
 
         glfwSwapBuffers(window);
         // 그냥 버퍼값에 따라 화면 다시 그리는건데 화면을 그냥 다시 그리는게 아닌 백그라운드에서 다 그리고 원래 화면이랑 교채하는 방식이라 Swap인것
