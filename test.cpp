@@ -13,17 +13,6 @@ void processInput(GLFWwindow *window) // 인풋 받기 예제, 루프에 들어�
         glfwSetWindowShouldClose(window, true);
 }
 
-float vertices[] = { // 정점배열
-     0.5f,  0.5f, 0.0f,  // 우측 상단
-     0.5f, -0.5f, 0.0f,  // 우측 하단
-    -0.5f, -0.5f, 0.0f,  // 좌측 하단
-    -0.5f,  0.5f, 0.0f   // 좌측 상단
-};
-unsigned int indices[] = {  // 0부터 시작한다는 것을 명심하세요!
-    0, 1, 3,   // 첫 번째 삼각형
-    1, 2, 3    // 두 번째 삼각형
-};   // ebo에서 사용할 배열
-
 
 //GLSL의 입력변수(쉐이더 입력변수) 는 vertex attribute라고 하고 최대개수가 정해져있다.
 //GLSL은 int, float, double, uint, bool, vector, matrics 변수 형태를 지원한다
@@ -96,7 +85,14 @@ int main(){
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }    
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
+    float vertices[] = { // 정점배열
+     0.5f,  0.5f, 0.0f,  
+     0.5f, -0.5f, 0.0f, 
+    -0.5f, -0.5f, 0.0f,  
+    };
 
 
     // vertexShader
@@ -156,12 +152,10 @@ int main(){
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    unsigned int EBO;
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);  
+
+    glBindVertexArray(VAO);// static draw이니 VAO 바뀔일 거의 x 그러니 렌더링 루프 밖에서 바인드 해도 됨. (어차피 순차적 진행이니 유지)
 
 
     glViewport(0, 0, 800, 600);
@@ -170,10 +164,6 @@ int main(){
     while(!glfwWindowShouldClose(window))
     {
         processInput(window);
-
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
 
         float timeValue = glfwGetTime(); // 렌더링 시간 초단위 가져오기
         float greenValue = (sin(timeValue) / 2.0f) + 0.5f; // 렌더링 시간 기반 주기적 green값
@@ -188,10 +178,9 @@ int main(){
         3f: 이 함수는 3개의 float 타입의 값을 원합니다.
         fv: 이 함수는float 타입의 vector/배열을 원합니다.
         */
-        
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
