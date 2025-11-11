@@ -6,6 +6,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) 
 {
     glViewport(0, 0, width, height);
@@ -41,36 +45,55 @@ int main(){
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    float vertices[] = {
-        // 위치              // 컬러
-        0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // 우측 하단
-        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // 좌측 하단
-        0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // 위 
-    };    
+   float vertices[] = {
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,
+
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,
+    };
+    
+
+
+
     Shader ourShader("shader.vs", "shader.fs");
 
-    /*
-    //행렬 조합해서 이동 시 스케일 -> 회전 -> 이동 순서로 하기를 권고. 왜냐하면 마지막에 스케일할 경우 이동,회전까지 스케일 되는 등 문제 발생
-    //행렬 연산은 순서 꼭 생각하자 
-    glm::mat4 trans; // 그대로 나오는 단위행렬
-    trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0)); // 여기서 (0,0,1)을 축으로 90도 회전
-    // trans = R * trans
-    trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));  // 그걸 또 받아와서 0.5배 스케일링
-    //trans = S * (R * trans)
-    //결국 벡터에 적용할 때에는 (S * R * trans) * V가 되므로 스케일 -> 회전을 담은 변환행렬과 곱하게 됨.
-    // --> 순서 뒤집힘
-
-    
-
-    unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-    ourShader.use();
-    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); 
-    
-    // 두 번쨰 파라미터 : 행렬의 개수
-    // 세 번째 파라미터 : 행과 열을 바꿀건지(GLM기본인 column-major ordering을 사용하므로 바꿀 필요 x)
-    // 네 번째 파라미터 : 우리의 변환 행렬을 맞는 타입으로 변환해서 넣어주기
-
-    */
     unsigned int VBO;
     glGenBuffers(1, &VBO);
     unsigned int VAO;
@@ -81,7 +104,7 @@ int main(){
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3* sizeof(float)));
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);  
+    glEnableVertexAttribArray(1);
 
     glBindVertexArray(VAO);
 
@@ -94,14 +117,25 @@ int main(){
         processInput(window);
 
         glm::mat4 trans;
-        // trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f)); // 이동 
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
         ourShader.use();
-        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        glm::mat4 view          = glm::mat4(1.0f);
+        glm::mat4 projection    = glm::mat4(1.0f);
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
+        view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        // retrieve the matrix uniform locations
+        // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+        ourShader.setMat4("projection", projection);
+        ourShader.setMat4("model", model);
+        ourShader.setMat4("view", view);
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glEnable(GL_DEPTH_TEST);  // depth test 키기
+        glClear(GL_DEPTH_BUFFER_BIT); // zbuffer(deptBuffer)사용중이므로 매 루프마다 비워줘야 한다.
+        
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -111,3 +145,63 @@ int main(){
     glfwTerminate();
     return 0;
 }
+
+
+/*
+사실 정점벡터에 정점이 -1~1사이의 값을 가질 필요 없음.
+화면에서는
+Orthographic projection에서 설정하는 범위만큼을 보여줌. 3d이기 때문에 평면의 넓이와 그것의 깊이범위까지.
+그냥 사각형 박스를 설정하고 그 안에 있는걸 보여준다고 생각하면 됨.
+그럼 그 안에 있는 정점들을 다 보고
+그걸 각각 -1~1로 자동으로 매핑해줌(NDC로 매핑한다는 것)
+
+glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
+가로 넓이 시작,끝
+세로 높이 시작, 끝
+깊이 범위 시작, 끝으로 설정
+
+근데 이걸 그냥 쓰면 원근감 고려를 안 하니 원근감을 담당하는 projection도 필요함
+*/
+
+/*
+Perspective projection
+여기서 원근감 담당해줌, 이걸 뭐 어떻게 계산하는지는 몰라도 됨
+glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 100.0f);
+이건 내가 원근감 계산하는거에 스포같으니 그냥 넘어가자 ㅋㅋㅋ
+근데 이제 여기서도 하나의 박스 형태로 애들을 clip한다.
+*/
+
+/*
+Orthographic projection과 Perspective projection은 둘중 하나를 선택하는거지 둘 다 하는게 아니다.
+*/
+
+/*
+이제 결과로서 clipSpace안에 있는 각 정점들이 있을거다
+이제 이걸 normalized-device coordinates로 변환하기 위해 perspective division를 하고 (이 부분은 저기 Orthographic projection에서!)
+viewPort에 맞춰서 NDC(normalized-device coordinates)를 screenSpace의 좌표로 매핑한다
+*/
+
+/*
+이제 하나를 3d처럼 렌더링할 수 있으니 아예 3d 세상을 만들자.
+각각의 위치가 있을거고 그 위치로 이동을 시키기 위한 변환벡터 model을 만든다
+glm::mat4 model;
+model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f)); 
+이제 이 model벡터를 사용해서 전체 wordspace에서의 각 오브젝트의 포지션을 설정해줄 수 있다
+
+
+그 다음은 view행렬인데, 카메라 위치를 옮기는 것 같지만 사실 카메라는 가만히 있고 세상을 그 반대로 옮기는것이다
+glm::mat4 view;
+// 우리가 움직이고 싶은 방향과 반대의 방향으로 scene을 이동시키고 있다는 것을 알아두세요.
+view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f)); 
+*/
+
+/*
+마지막으로 view, model, projection행렬을 다 uniform으로 vs에 전달해서 곱해주면 된다.
+*/
+
+
+/*
+어떤게 뒤에 있고 앞에 있고를 저장하고 뒤에 가려지는 걸 그리지 않기 위해 z버퍼를 사용한다
+뒤에 있는지 비교하고 그릴지 말지를 하는걸 depth_testing이라고 한다.
+설정에서 켜주면 된다.
+*/
